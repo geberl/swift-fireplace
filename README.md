@@ -8,6 +8,12 @@
 ![OS](https://img.shields.io/badge/tvOS-15.0-yellow.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
+## Screenshots
+
+![screenshot1](/images/screenshot_1.png?raw=true "Screenshot 1")
+
+![screenshot2](/images/screenshot_2.png?raw=true "Screenshot 1")
+
 ## Bring Your Own Video
 
 For copyright reasons the file `fire.mp4` is not included. It can be supplied for example in the following way:
