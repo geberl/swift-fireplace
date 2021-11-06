@@ -88,3 +88,6 @@ fastlane/test_output
 # https://github.com/johnno1962/injectionforxcode
 
 iOSInjectionProject/
+videos/*.mp4
+videos/*.m4a
+videos/*.m4v
