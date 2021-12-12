@@ -8,11 +8,12 @@ class ViewController: UIViewController {
     private var videoPlayer: VideoPlayer?
 
     override func viewDidLoad() {
-        print("viewDidLoad")
         super.viewDidLoad()
         
+        NotificationCenter.default.addObserver(self, selector: #selector(ViewController.activate), name: .applicationDidBecomeActive, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(ViewController.activate), name: .applicationWillEnterForeground, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(ViewController.deactivate), name: .applicationWillResignActive, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(ViewController.deactivate), name: .applicationDidEnterBackground, object: nil)
         
         view.addSubview(playerView)
         preparePlayer()

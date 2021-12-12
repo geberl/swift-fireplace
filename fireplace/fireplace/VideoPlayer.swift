@@ -154,7 +154,6 @@ class VideoPlayer : NSObject {
                     addPeriodicalObserver()
                     if let playView = playerView, let layer = playView.layer as? AVPlayerLayer {
                         layer.player = assetPlayer
-                        print("player created")
                     }
                 }
             }
