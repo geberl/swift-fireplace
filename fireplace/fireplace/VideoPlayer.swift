@@ -2,17 +2,16 @@ import AVFoundation
 import Foundation
 
 protocol VideoPlayerDelegate {
-    func downloadedProgress(progress:Double)
+    func downloadedProgress(progress: Double)
     func readyToPlay()
-    func didUpdateProgress(progress:Double)
+    func didUpdateProgress(progress: Double)
     func didFinishPlayItem()
     func didFailPlayToEnd()
 }
 
 let videoContext: UnsafeMutableRawPointer? = nil
 
-class VideoPlayer : NSObject {
-
+class VideoPlayer: NSObject {
     private var assetPlayer: AVPlayer?
     private var playerItem: AVPlayerItem?
     private var urlAsset: AVURLAsset?
@@ -21,12 +20,12 @@ class VideoPlayer : NSObject {
     private var assetDuration: Double = 0
     private var playerView: PlayerView?
 
-    private var autoRepeatPlay:Bool = true
-    private var autoPlay:Bool = true
+    private var autoRepeatPlay: Bool = true
+    private var autoPlay: Bool = true
 
-    var delegate:VideoPlayerDelegate?
+    var delegate: VideoPlayerDelegate?
 
-    var playerRate:Float = 1 {
+    var playerRate: Float = 1 {
         didSet {
             if let player = assetPlayer {
                 player.rate = playerRate > 0 ? playerRate : 0.0
@@ -34,7 +33,7 @@ class VideoPlayer : NSObject {
         }
     }
 
-    var volume:Float = 1.0 {
+    var volume: Float = 1.0 {
         didSet {
             if let player = assetPlayer {
                 player.volume = volume > 0 ? volume : 0.0
@@ -44,7 +43,7 @@ class VideoPlayer : NSObject {
 
     // MARK: - Init
 
-    convenience init(urlAsset:NSURL, view:PlayerView, startAutoPlay:Bool = true, repeatAfterEnd:Bool = true) {
+    convenience init(urlAsset: NSURL, view: PlayerView, startAutoPlay: Bool = true, repeatAfterEnd: Bool = true) {
         self.init()
 
         playerView = view
@@ -72,13 +71,16 @@ class VideoPlayer : NSObject {
         }
     }
 
-    func seekToPosition(seconds:Float64) {
-        if let player = assetPlayer {
-            pause()
-            if let timeScale = player.currentItem?.asset.duration.timescale {
-                player.seek(to: CMTimeMakeWithSeconds(seconds, preferredTimescale: timeScale), completionHandler: { (complete) in
-                    self.play()
-                })
+    func seekToPosition(seconds: Float64) {
+        Task {
+            if let player = assetPlayer {
+                pause()
+                let duration = try await player.currentItem?.asset.load(.duration)
+                if let safeDuration = duration {
+                    player.seek(to: CMTimeMakeWithSeconds(seconds, preferredTimescale: safeDuration.timescale), completionHandler: { _ in
+                            self.play()
+                        })
+                }
             }
         }
     }
@@ -91,7 +93,7 @@ class VideoPlayer : NSObject {
 
     func play() {
         if let player = assetPlayer {
-            if (player.currentItem?.status == .readyToPlay) {
+            if player.currentItem?.status == .readyToPlay {
                 player.play()
                 player.rate = playerRate
             }
@@ -112,25 +114,25 @@ class VideoPlayer : NSObject {
     // MARK: - Private
 
     private func prepareToPlay() {
-        let keys = ["tracks"]
-        if let asset = urlAsset {
-            asset.loadValuesAsynchronously(forKeys: keys, completionHandler: {
+        Task {
+            if let asset = urlAsset {
+                let _ = try await asset.load(.tracks)
                 DispatchQueue.main.async {
                     self.startLoading()
                 }
-            })
+            }
         }
     }
 
-    private func startLoading(){
-        var error:NSError?
-        guard let asset = urlAsset else {return}
-        let status:AVKeyValueStatus = asset.statusOfValue(forKey: "tracks", error: &error)
+    private func startLoading() {
+        var error: NSError?
+        guard let asset = urlAsset else { return }
+        let status: AVKeyValueStatus = asset.statusOfValue(forKey: "tracks", error: &error)
 
         if status == AVKeyValueStatus.loaded {
             assetDuration = CMTimeGetSeconds(asset.duration)
 
-            let videoOutputOptions = [kCVPixelBufferPixelFormatTypeKey as String : Int(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange)]
+            let videoOutputOptions = [kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange)]
             videoOutput = AVPlayerItemVideoOutput(pixelBufferAttributes: videoOutputOptions)
             playerItem = AVPlayerItem(asset: asset)
 
@@ -164,13 +166,13 @@ class VideoPlayer : NSObject {
         let timeInterval = CMTimeMake(value: 1, timescale: 1)
 
         if let player = assetPlayer {
-            player.addPeriodicTimeObserver(forInterval: timeInterval, queue: DispatchQueue.main, using: { (time) in
+            player.addPeriodicTimeObserver(forInterval: timeInterval, queue: DispatchQueue.main, using: { time in
                 self.playerDidChangeTime(time: time)
             })
         }
     }
 
-    private func playerDidChangeTime(time:CMTime) {
+    private func playerDidChangeTime(time: CMTime) {
         if let player = assetPlayer {
             let timeNow = CMTimeGetSeconds(player.currentTime())
             let progress = timeNow / assetDuration
@@ -194,7 +196,7 @@ class VideoPlayer : NSObject {
         delegate?.didFailPlayToEnd()
     }
 
-    private func playerDidChangeStatus(status:AVPlayer.Status) {
+    private func playerDidChangeStatus(status: AVPlayer.Status) {
         if status == .failed {
             print("Failed to load video")
         } else if status == .readyToPlay, let player = assetPlayer {
@@ -207,16 +209,16 @@ class VideoPlayer : NSObject {
         }
     }
 
-    private func moviewPlayerLoadedTimeRangeDidUpdated(ranges:Array<NSValue>) {
-        var maximum:TimeInterval = 0
+    private func moviewPlayerLoadedTimeRangeDidUpdated(ranges: [NSValue]) {
+        var maximum: TimeInterval = 0
         for value in ranges {
-            let range:CMTimeRange = value.timeRangeValue
+            let range: CMTimeRange = value.timeRangeValue
             let currentLoadedTimeRange = CMTimeGetSeconds(range.start) + CMTimeGetSeconds(range.duration)
             if currentLoadedTimeRange > maximum {
                 maximum = currentLoadedTimeRange
             }
         }
-        let progress:Double = assetDuration == 0 ? 0.0 : Double(maximum) / assetDuration
+        let progress: Double = assetDuration == 0 ? 0.0 : Double(maximum) / assetDuration
 
         delegate?.downloadedProgress(progress: progress)
     }
@@ -225,14 +227,14 @@ class VideoPlayer : NSObject {
         cleanUp()
     }
 
-    private func initialSetupWithURL(url:NSURL) {
-        let options = [AVURLAssetPreferPreciseDurationAndTimingKey : true]
+    private func initialSetupWithURL(url: NSURL) {
+        let options = [AVURLAssetPreferPreciseDurationAndTimingKey: true]
         urlAsset = AVURLAsset(url: url as URL, options: options)
     }
 
     // MARK: - Observations
-    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
 
+    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey: Any]?, context: UnsafeMutableRawPointer?) {
         if context == videoContext {
             if let key = keyPath {
                 if key == "status", let player = assetPlayer {

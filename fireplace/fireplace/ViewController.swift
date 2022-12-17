@@ -1,10 +1,9 @@
-import UIKit
-import AVKit
 import AVFoundation
+import AVKit
+import UIKit
 
 class ViewController: UIViewController {
-    
-    private var playerView: PlayerView = PlayerView()
+    private var playerView: PlayerView = .init()
     private var videoPlayer: VideoPlayer?
 
     override func viewDidLoad() {
@@ -34,12 +33,12 @@ class ViewController: UIViewController {
     
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
-        self.deactivate(nil)
+        deactivate(nil)
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        self.activate(nil)
+        activate(nil)
     }
     
     @objc func activate(_ notification: Notification?) {
@@ -53,5 +52,4 @@ class ViewController: UIViewController {
             player.playerRate = 0.0
         }
     }
-    
 }

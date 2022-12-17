@@ -2,10 +2,10 @@
 
 *Offline playback of a fireplace video on your Apple TV*
 
-![Swift](https://img.shields.io/badge/swift-5.5-orange.svg)
-![Xcode](https://img.shields.io/badge/xcode-13.1-brightgreen.svg)
+![Swift](https://img.shields.io/badge/swift-5.7.1-orange.svg)
+![Xcode](https://img.shields.io/badge/xcode-14.1-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/platform-appleTV-lightgrey.svg)
-![OS](https://img.shields.io/badge/tvOS-15.0-yellow.svg)
+![OS](https://img.shields.io/badge/tvOS-16.1-yellow.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
 ## Screenshots
@@ -26,7 +26,7 @@ For copyright reasons the file `fire.mp4` is not included. It can be supplied fo
 - Download it `youtube-dl https://www.youtube.com/watch\?v\=Ux8xAuQBdkk --format 140 --output audio.m4a`
 - Combine them `ffmpeg -i video.m4v -i audio.m4a -c:v copy -c:a copy fire.mp4`
 - Drag & drop the resulting file `fire.mp4` into Xcode and add it as an asset that is bundled on build
-    - Project -> Build Phases -> Copy Bundle Resources -> `fire.mp4` must appear in the list
+    - Project -> Target -> Build Phases -> Copy Bundle Resources -> `fire.mp4` must appear in the list
 
 ## Resources
 
